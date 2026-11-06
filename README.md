@@ -27,10 +27,6 @@ I made two users, alice (2 tasks) and bob (1 task). Without login the API gave 4
 
 **Ownership check.** In FastAPI I checked the owner myself and returned 403. In Django one line, `Task.objects.filter(owner=self.request.user)` in `get_queryset`, does the same job, but another user's task gives 404 instead of 403. Same idea, different spelling.
 
-**Async.** FastAPI is async-first, Django's normal views are synchronous. For a small app like this it did not matter. It would matter more for a service that waits on many slow calls, for example an AI model service.
-
 **Admin panel.** It is a real advantage for an internal tool, where staff need to edit data without writing a frontend. It is the wrong tool for customers, because it is for trusted internal users and it is not a public API.
-
-**Which one I would pick.** For an inventory tool for a small team: Django, because the admin panel is basically the whole interface. For a service that other backends call over an API with no human UI: FastAPI, because it is lighter, faster and gives `/docs` for free.
 
 **One practical note.** My laptop has Python 3.9, which cannot run Django 5.2 (needs 3.10+), so I used Django 4.2 LTS. Everything in the handout worked the same.
