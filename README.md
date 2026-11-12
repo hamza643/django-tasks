@@ -30,3 +30,25 @@ I made two users, alice (2 tasks) and bob (1 task). Without login the API gave 4
 **Admin panel.** It is a real advantage for an internal tool, where staff need to edit data without writing a frontend. It is the wrong tool for customers, because it is for trusted internal users and it is not a public API.
 
 **One practical note.** My laptop has Python 3.9, which cannot run Django 5.2 (needs 3.10+), so I used Django 4.2 LTS. Everything in the handout worked the same.
+
+
+## Knowledge app (RAG, fully local)
+
+A small question-answering feature over my own handouts. It splits documents into chunks, turns each chunk into an embedding (nomic-embed-text through Ollama), finds the chunks closest to a question, and asks llama3.2 (also through Ollama) to answer using only those chunks. Nothing is trained, and no API key is needed.
+
+### How to run it
+1. Install Ollama, then `ollama pull llama3.2` and `ollama pull nomic-embed-text`. Keep `ollama serve` running.
+2. `pip install -r requirements.txt`
+3. `python manage.py migrate`
+4. `python manage.py ingest docs`
+5. `python manage.py runserver` and open `/ask/?q=What does DefaultRouter do`
+
+Tests: `python manage.py test knowledge`. They do not need Ollama, because `embed` and `generate` are mocked.
+
+### Did I check that the answers are right?
+I asked three real questions and compared each answer with the handout:
+1. "What does DefaultRouter do?" The answer was correct. But the sources list also showed an unrelated document, so the sources show which documents were retrieved, not which ones the answer really used.
+2. "Why does the Dockerfile copy requirements.txt before the rest of the code?" Mostly correct (layer caching), but the model dropped the condition that this only matters if the code is copied first.
+3. "What is the difference between WHERE and HAVING?" The answer was "I do not know". The explanation is in the handout, but retrieval found a chunk that only contained the review question with the same words, not the explanation. So retrieval failed, while grounding worked: the model said it did not know instead of inventing an answer.
+
+I also tried k=6 instead of k=3. It did not fix question 3, and it made question 2 worse ("I do not know"), because more chunks also meant more irrelevant text for a small 2GB model. So a bigger k is not a fix. A better fix would be better chunking (for example keeping the section heading with each chunk and keeping code blocks whole).
